@@ -43,6 +43,8 @@ $app->configure('services');
 $app->configure('mail');
 
 $app->configure('cors');
+$app->configure('database'); 
+$app->configure('cache');
 
 /*
 |--------------------------------------------------------------------------
@@ -130,6 +132,10 @@ app('Dingo\Api\Auth\Auth')->extend('jwt', function ($app) {
 });
 // Mail
 $app->register(\Illuminate\Mail\MailServiceProvider::class);
+
+//Lumen register redis
+$app->register(Illuminate\Redis\RedisServiceProvider::class);
+$app['redis'];
 
 // Injecting auth
 $app->singleton(Illuminate\Auth\AuthManager::class, function ($app) {

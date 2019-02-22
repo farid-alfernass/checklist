@@ -21,6 +21,18 @@ $api->version('v1', [
                 $users = \App\Models\User::all();
                 return response()->json($users);
             });
+            $api->post('checklist', ['uses' => 'ChecklistControllers@store']);
+            // $api->post('checklist', function(\Illuminate\Http\Request $request) {
+            //     $data = $request->json('data')['attributes'];
+            //     $items = $data['items'];
+            //     foreach ($items as $key) {
+            //         // $item = new Item();
+            //         echo $key.' \n';
+            //         // $item->checklistId = $checklist->id;
+            //         // $item->description = $key
+            //     }
+            //     // print_r($data);
+            // });
         }
     );
     $api->post('/register', 'AuthController@register');

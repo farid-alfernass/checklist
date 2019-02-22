@@ -15,7 +15,9 @@ class CreateTemplateTable extends Migration
     {
         Schema::create('template', function (Blueprint $table) {
             $table->increments('id');
-            $table->timestamps();
+            $table->string('name');
+            $table->integer('checklist_id');
+            $table->integer('item_id');
         });
     }
 
