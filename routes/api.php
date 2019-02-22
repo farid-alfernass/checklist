@@ -22,6 +22,10 @@ $api->version('v1', [
                 return response()->json($users);
             });
             $api->post('checklist', ['uses' => 'ChecklistControllers@store']);
+            $api->patch('checklist/{id}', ['uses' => 'ChecklistControllers@update']);
+            $api->delete('checklist/{id}', ['uses' => 'ChecklistControllers@destroy']);
+            $api->get('checklist', ['uses' => 'ChecklistControllers@index']);
+            $api->get('checklist/{id}', ['uses' => 'ChecklistControllers@show']);
             // $api->post('checklist', function(\Illuminate\Http\Request $request) {
             //     $data = $request->json('data')['attributes'];
             //     $items = $data['items'];
