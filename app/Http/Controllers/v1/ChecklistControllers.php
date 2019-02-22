@@ -22,15 +22,15 @@ class ChecklistControllers extends Controller
     public function index(Request $request)
     {
         $defaultPerPage = 1;
-        $maximumPerPage = 1;
-        $page           = 1;
+        $maximumPerPage = 10;
+        $page           = 0;
         $sort 			= 'asc';
         $include 		= '';
         $expireAt       = Carbon::now()->addMinutes(3);
 
         if($request->has('sort'))
         {
-            $sort = (string) $request->input('sort');
+            $sort = (string) $request->query('sort');
             if ($sort == '-urgency') {
             	$sort = 'desc';
             }
@@ -38,14 +38,14 @@ class ChecklistControllers extends Controller
 
         if($request->has('include'))
         {
-            $include = (string) $request->input('include');
+            $include = (string) $request->query('include');
         }
 
         if($request->has('page_limit'))
         {
-            if(is_numeric($request->input('page_limit')))
+            if(is_numeric($request->query('page_limit')))
             {
-                $defaultPerPage = (int) $request->input('page_limit');
+                $defaultPerPage = (int) $request->query('page_limit');
 
                 if($defaultPerPage > $maximumPerPage)
                 {
@@ -56,7 +56,7 @@ class ChecklistControllers extends Controller
 
         if($request->has('page_offset'))
         {
-            $page = (int)$defaultPerPage * ( $request->input('page_offset') - 1);
+            $page = (int)$defaultPerPage * ( $request->query('page_offset') - 1);
         }
 
         $checklist = Cache::remember('checklist.index:show:{$page}', $expireAt, function() use ($defaultPerPage,$page,$sort) {
@@ -189,15 +189,15 @@ class ChecklistControllers extends Controller
     public function show($id,Request $request)
     {
         $defaultPerPage = 1;
-        $maximumPerPage = 1;
-        $page           = 1;
+        $maximumPerPage = 10;
+        $page           = 0;
         $sort 			= 'asc';
         $include 		= '';
         $expireAt       = Carbon::now()->addMinutes(3);
 
         if($request->has('sort'))
         {
-            $sort = (string) $request->input('sort');
+            $sort = (string) $request->query('sort');
             if ($sort == '-urgency') {
             	$sort = 'desc';
             }
@@ -205,14 +205,14 @@ class ChecklistControllers extends Controller
 
         if($request->has('include'))
         {
-            $include = (string) $request->input('include');
+            $include = (string) $request->query('include');
         }
 
         if($request->has('page_limit'))
         {
-            if(is_numeric($request->input('page_limit')))
+            if(is_numeric($request->query('page_limit')))
             {
-                $defaultPerPage = (int) $request->input('page_limit');
+                $defaultPerPage = (int) $request->query('page_limit');
 
                 if($defaultPerPage > $maximumPerPage)
                 {
@@ -223,7 +223,7 @@ class ChecklistControllers extends Controller
 
         if($request->has('page_offset'))
         {
-            $page = (int)$defaultPerPage * ( $request->input('page_offset') - 1);
+            $page = (int)$defaultPerPage * ( $request->query('page_offset') - 1);
         }
 
         $checklist = Cache::remember('checklist.index:show:{$id}:{$page}', $expireAt, function() use ($defaultPerPage,$page,$sort,$id) {
@@ -363,7 +363,7 @@ class ChecklistControllers extends Controller
 
     public function destroy($id){
 
-        $checklist = checklist::find($id);
+        $checklist = Checklist::find($id);
 
         if(!$checklist){
             return new JsonResponse([

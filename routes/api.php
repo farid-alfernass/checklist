@@ -21,11 +21,23 @@ $api->version('v1', [
                 $users = \App\Models\User::all();
                 return response()->json($users);
             });
+
+            //checklist
             $api->post('checklist', ['uses' => 'ChecklistControllers@store']);
             $api->patch('checklist/{id}', ['uses' => 'ChecklistControllers@update']);
             $api->delete('checklist/{id}', ['uses' => 'ChecklistControllers@destroy']);
             $api->get('checklist', ['uses' => 'ChecklistControllers@index']);
             $api->get('checklist/{id}', ['uses' => 'ChecklistControllers@show']);
+
+            //checklist items
+            $api->post('checklist/{id}/items', ['uses' => 'ItemsControllers@store']);
+            $api->post('checklist/complete', ['uses' => 'ItemsControllers@storeComplete']);
+            $api->post('checklist/incomplete', ['uses' => 'ItemsControllers@storeInComplete']);
+            $api->patch('checklist/{id}/items/{idi}', ['uses' => 'ItemsControllers@update']);
+            $api->delete('checklist/{id}/items/{idi}', ['uses' => 'ItemsControllers@destroy']);
+            $api->get('checklist/{id}/items', ['uses' => 'ItemsControllers@show']);
+            $api->get('checklist/{id}/items/{idi}', ['uses' => 'ItemsControllers@showItem']);
+            // $api->get('checklist/{id}', ['uses' => 'ChecklistControllers@show']);
             // $api->post('checklist', function(\Illuminate\Http\Request $request) {
             //     $data = $request->json('data')['attributes'];
             //     $items = $data['items'];
