@@ -21,7 +21,14 @@ $api->version('v1', [
                 $users = \App\Models\User::all();
                 return response()->json($users);
             });
-
+            //checklist items
+            $api->post('checklist/templates', ['uses' => 'TemplateControllers@store']);
+            // $api->post('checklist/templates/{id}/assigns', ['uses' => 'TemplateControllers@storeComplete']);
+            // $api->patch('checklist/templates/{id}', ['uses' => 'TemplateControllers@update']);
+            // $api->delete('checklist/templates/{id}', ['uses' => 'TemplateControllers@destroy']);
+            // $api->get('checklist/templates/{id}', ['uses' => 'TemplateControllers@show']);
+            $api->get('checklist/templates', ['uses' => 'TemplateControllers@index']);
+            
             //checklist
             $api->post('checklist', ['uses' => 'ChecklistControllers@store']);
             $api->patch('checklist/{id}', ['uses' => 'ChecklistControllers@update']);
@@ -37,31 +44,8 @@ $api->version('v1', [
             $api->delete('checklist/{id}/items/{idi}', ['uses' => 'ItemsControllers@destroy']);
             $api->get('checklist/{id}/items', ['uses' => 'ItemsControllers@show']);
             $api->get('checklist/{id}/items/{idi}', ['uses' => 'ItemsControllers@showItem']);
-            // $api->get('checklist/{id}', ['uses' => 'ChecklistControllers@show']);
-            // $api->post('checklist', function(\Illuminate\Http\Request $request) {
-            //     $data = $request->json('data')['attributes'];
-            //     $items = $data['items'];
-            //     foreach ($items as $key) {
-            //         // $item = new Item();
-            //         echo $key.' \n';
-            //         // $item->checklistId = $checklist->id;
-            //         // $item->description = $key
-            //     }
-            //     // print_r($data);
-            // });
+
+            
         }
     );
-    $api->post('/register', 'AuthController@register');
-    $api->post('/login', 'AuthController@login');
-    $api->get('/me', 'AuthController@me');
-    $api->get('/refresh', 'AuthController@refresh');
-
-    $api->post('/storage', 'StorageController@index');
-
-    $api->get('/mentor/favorite', 'MentorController@favorite');
-    $api->get('/schedule', 'ScheduleController@index');
-
-    $api->get('/activity', 'ActivityController@main');
-
-    $api->post('/schedule/store', 'ScheduleController@store');
 });

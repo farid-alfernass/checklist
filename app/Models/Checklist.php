@@ -15,7 +15,7 @@ class Checklist extends Model
     protected $guarded = [];
 
     protected $fillable = [
-        'object_domain','object_id','description','is_completed','completed_at','due','urgency','updated_by','updated_at','created_at'
+        'object_domain','object_id','description','is_completed','completed_at','due','due_interval','due_unit','urgency','updated_by','updated_at','created_at'
     ];
 
     protected $dateFormat = \DateTime::ATOM;
@@ -26,7 +26,7 @@ class Checklist extends Model
 
     public function item()
     {
-        return $this->hasMany('App\Models\item','checklistId');
+        return $this->hasMany('App\Models\Item','checklistId');
     }
 
     /**

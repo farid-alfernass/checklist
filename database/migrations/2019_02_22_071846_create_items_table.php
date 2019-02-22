@@ -20,6 +20,8 @@ class CreateItemsTable extends Migration
             $table->boolean('is_completed')->nullable();
             $table->string('completed_at')->nullable();
             $table->string('due')->nullable();
+            $table->integer('due_interval')->nullable();
+            $table->string('due_unit')->nullable();
             $table->tinyInteger('urgency')->nullable();
             $table->string('updated_by')->nullable();
             $table->string('created_at')->nullable();

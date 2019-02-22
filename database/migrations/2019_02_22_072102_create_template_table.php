@@ -17,7 +17,8 @@ class CreateTemplateTable extends Migration
             $table->increments('id');
             $table->string('name');
             $table->integer('checklist_id');
-            $table->integer('item_id');
+            $table->string('updated_at');
+            $table->string('created_at');
         });
     }
 

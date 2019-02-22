@@ -1,11 +1,10 @@
 <?php
 
-namespace App\Models;
+namespace App\models;
 
 use Illuminate\Database\Eloquent\Model;
-use DateTime;
 
-class Item extends Model
+class Template extends Model
 {
     /**
      * The attributes that are mass assignable.
@@ -15,18 +14,18 @@ class Item extends Model
     protected $guarded = [];
 
     protected $fillable = [
-        'description','is_completed','due','due_interval','due_unit','urgency','updated_by','updated_at','created_at'
+        'name','checklist_id'
     ];
 
-    protected $table = 'items';
+    protected $dateFormat = \DateTime::ATOM;
 
-    protected $dateFormat = DateTime::ATOM;
+    protected $table = 'template';
 
     protected $primaryKey = 'id';
 
-    public function checklist()
+    public function item()
     {
-        return $this->belongsTo('App\Models\Checklist','id');
+        return $this->hasMany('App\Models\Checklist','id');
     }
 
     /**

@@ -24,6 +24,8 @@ class CreateChecklistTable extends Migration
             $table->string('updated_at');
             $table->string('created_at');
             $table->string('due');
+            $table->integer('due_interval')->nullable();
+            $table->string('due_unit')->nullable();
             $table->tinyInteger('urgency');
         });
     }

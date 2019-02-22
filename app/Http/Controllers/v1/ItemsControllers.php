@@ -59,7 +59,7 @@ class ItemsControllers extends Controller
             $page = (int)$defaultPerPage * ( $request->query('page_offset') - 1);
         }
 
-        $checklist = Cache::remember('checklist.index:show:{$page}', $expireAt, function() use ($defaultPerPage,$page,$sort) {
+        $checklist = Cache::remember('item.index:show:{$page}', $expireAt, function() use ($defaultPerPage,$page,$sort) {
                         return DB::table('checklist')
                                         ->select('checklist.id','checklist.object_domain','checklist.object_id','checklist.description','checklist.is_completed','checklist.due','checklist.urgency','checklist.completed_at','checklist.updated_by as last_update_by','checklist.updated_at','checklist.created_at')
                                         ->orderBy('checklist.urgency',$sort)
