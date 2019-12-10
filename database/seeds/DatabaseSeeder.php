@@ -1,5 +1,4 @@
 <?php
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Seeder;
 class DatabaseSeeder extends Seeder
 {
@@ -10,9 +9,13 @@ class DatabaseSeeder extends Seeder
      */
     public function run()
     {
-        Model::unguard();
-        // Register the user seeder
-        $this->call(UsersTableSeeder::class);
-        Model::reguard();
+        // TEMPLATE SEEDER
+        factory(App\Models\User::class, 2)->create();
+        // TEMPLATE SEEDER
+        factory(App\Models\Template::class, 10)->create();
+        // CHECKLIST SEEDER
+        factory(App\Models\Checklist::class, 10)->create();
+        // ITEM SEEDER
+        factory(App\Models\Item::class, 10)->create();
     }
 }

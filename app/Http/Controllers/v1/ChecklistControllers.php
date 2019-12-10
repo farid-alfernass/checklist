@@ -2,384 +2,222 @@
 
 namespace App\Http\Controllers\v1;
 
-use Illuminate\Support\Facades\DB;
-use App\Models\Item;
-use App\Models\Checklist;
-use Carbon\Carbon;
-use Dingo\Api\Transformer\Adapter\Fractal;
-use Faker\Provider\Image;
 use Illuminate\Http\Request;
+use App\Models\User;
+use App\Models\Template;
+use App\Models\Checklist;
+use App\Models\Item;
+use DB;
+use App\Http\Resources\Checklist\ListofItemInGivenChecklistResource;
+use App\Http\Resources\Checklist\GetChecklistResource;
+use App\Http\Resources\Checklist\GetListofChecklistCollection;
+use Carbon\Carbon;
 use App\Http\Controllers\Controller;
-use Illuminate\Support\Facades\Log;
-use Prophecy\Doubler\CachedDoubler;
-use Laravel\Lumen\Application;
-use Illuminate\Http\JsonResponse;
-use Cache;
-use Illuminate\Support\Facades\Redis;
 
-class ChecklistControllers extends Controller
-{
-    public function index(Request $request)
+class ChecklistControllers extends Controller{
+    protected $checklists;
+    protected $items;
+    /**
+     * Create a new controller instance.
+     *
+     * @return void
+     */
+    public function __construct()
     {
-        $defaultPerPage = 1;
-        $maximumPerPage = 10;
-        $page           = 0;
-        $sort 			= 'asc';
-        $include 		= '';
-        $expireAt       = Carbon::now()->addMinutes(3);
+        $this->checklists   = new Checklist;
+        $this->items        = new Item;
+    }
 
-        if($request->has('sort'))
-        {
-            $sort = (string) $request->query('sort');
-            if ($sort == '-urgency') {
-            	$sort = 'desc';
+    public function listofitemingivenchecklist($checklistId)
+    {
+        try{
+            $datachecklist      = Checklist::with('items')->where('id',$checklistId)->first();
+            // var_dump($datachecklist->items);
+            if(count($datachecklist->toArray()) > 0){
+                return new ListofItemInGivenChecklistResource($datachecklist);
+            }else{
+                return response()->json(
+                    [
+                        'data'   => []
+                    ],200
+                );    
             }
+        }catch(Exception $e){
+            return response()->json(
+                [
+                    'data'      => [$e->message()]
+                ], 500
+            );
         }
+    }
 
-        if($request->has('include'))
-        {
-            $include = (string) $request->query('include');
+    public function getchecklist($checklistId)
+    {
+        try{
+            $datachecklist      = Checklist::where('id',$checklistId)
+                                ->first();
+            // echo "<pre>";print_r($datachecklist);die();
+
+            if(count($datachecklist->toArray()) > 0){
+                return new GetChecklistResource($datachecklist);
+            }else{
+                return response()->json(
+                    [
+                        'data'   => []
+                    ],200
+                );    
+            }
+        }catch(Exception $e){
+            return response()->json(
+                [
+                    'data'      => [$e->message()]
+                ], 500
+            );
         }
+    }
 
-        if($request->has('page_limit'))
-        {
-            if(is_numeric($request->query('page_limit')))
-            {
-                $defaultPerPage = (int) $request->query('page_limit');
+    public function getlistofchecklist()
+    {
+        try{
+            $datachecklist      = Checklist::paginate();
 
-                if($defaultPerPage > $maximumPerPage)
-                {
-                    $defaultPerPage = $maximumPerPage;
+            if(count($datachecklist->toArray()) > 0){
+                return new GetListofChecklistCollection($datachecklist);
+            }else{
+                return response()->json(
+                    [
+                        'data'   => []
+                    ],200
+                );    
+            }
+        }catch(Exception $e){
+            return response()->json(
+                [
+                    'data'      => [$e->message()]
+                ], 500
+            );
+        }
+    }
+
+    public function update(Request $request, $checklistId)
+    {
+
+        $req                    = json_decode($request->getContent(),true);
+        $data                   = $req['data']['attributes'];
+
+        $execute                = Checklist::find($checklistId);
+        if($execute){
+            $result     = $execute->update(
+                [
+                    'object_domain' => $data['object_domain'],
+                    'object_id'     => $data['object_id'],
+                    'description'   => $data['description'],
+                    'is_completed'  => $data['is_completed'],
+                    'completed_at'  => $data['completed_at'],
+                    'created_at'    => $data['created_at']
+                ]
+            );    
+            if($result){
+                $datachecklist      = Checklist::where('id',$checklistId)
+                                    ->first();
+
+                if(count($datachecklist->toArray()) > 0){
+                    return new GetChecklistResource($datachecklist);
+                }else{
+                    return response()->json(
+                        [
+                            'data'   => []
+                        ],200
+                    );    
                 }
+            }else{
+                return response()->json(
+                    [
+                        'data'   => []
+                    ],200
+                );    
             }
-        }
-
-        if($request->has('page_offset'))
-        {
-            $page = (int)$defaultPerPage * ( $request->query('page_offset') - 1);
-        }
-
-        $checklist = Cache::remember('checklist.index:show:{$page}', $expireAt, function() use ($defaultPerPage,$page,$sort) {
-                        return DB::table('checklist')
-                                        ->select('checklist.id','checklist.object_domain','checklist.object_id','checklist.description','checklist.is_completed','checklist.due','checklist.urgency','checklist.completed_at','checklist.updated_by as last_update_by','checklist.updated_at','checklist.created_at')
-                                        ->orderBy('checklist.urgency',$sort)
-                                        ->limit($defaultPerPage)
-                                        ->offset($page)
-                                        ->get()->toArray();
-                            });
-
-        if(!empty($checklist))
-        {
-        	foreach ($checklist as $list) {
-        		$data = array(
-        			'type' 	=> 'checklists',
-        			'id'	=> $list->id,
-        			'attributes' => [
-        				'object_domain'=> $list->object_domain,
-				        'object_id'=> $list->object_id,
-				        'description'=> $list->description,
-				        'is_completed'=> $list->is_completed,
-				        'due'=> $list->due,
-				        'urgency'=> $list->urgency,
-				        'completed_at'=> $list->completed_at,
-				        'last_update_by'=> $list->last_update_by,
-				        'updated_at'=> $list->updated_at,
-				        'created_at'=> $list->created_at
-        				]	
-        			);
-        	}
-        	if($request->has('include')){
-        		if($include != ''){
-        			$items = DB::table('items')
-                                        ->select('items.id','items.description','items.is_completed','items.due','items.urgency')
-                                        ->orderBy('items.urgency',$sort)
-                                        ->limit($defaultPerPage)
-                                        ->offset($page)
-                                        ->get()->toArray();
-
-                    foreach ($items as $item) {
-		        		$dataItem = array(
-		        			'type' 	=> 'item',
-		        			'id'	=> $item->id,
-		        			'attributes' => [
-						        'description'=> $item->description,
-						        'is_completed'=> $item->is_completed,
-						        'due'=> $item->due,
-						        'urgency'=> $item->urgency
-		        				]	
-		        			);
-		        	}
-                    return new JsonResponse([
-			            'message' => 'success',
-			            'meta'	=> [
-			            	'count' => count($items),
-			            	'total'	=> count($checklist)
-			            	],
-			            'data' => (array) $data,
-			            'items' =>(array) $dataItem,
-						'links' => [ 'self' => $request->fullUrl() ]
-			        ],201);	
-        		}
-        	}else{
-        		return new JsonResponse([
-		            'message' => 'success',
-		            'meta'	=> [
-		            	'count' => $defaultPerPage,
-		            	'total'	=> count($checklist)
-		            	],
-		            'data' => (array) $data,
-					'links' => [ 'self' => $request->fullUrl() ]
-		        ],201);	
-        	}
-            
-        }
-        else
-        {
-        	return new JsonResponse([
-            	'message' => 'gagal',
-	        ],400);
+        }else{
+            return response()->json(
+                [
+                    'data'   => []
+                ],404
+            );
         }
         
-        // return response()->json(message' => 'success', 'data'=>$post],201);
+
+        if($result){
+            $datachecklist      = $this->checklists->show($checklistId);
+            return response()->json(
+                [
+                    'data'   => $datachecklist
+                ],200
+            );
+        }
+    }
+
+    public function destroy($checklistId)
+    {
+        try{
+            $check             = Checklist::find($checklistId);
+            if($check){
+                $result        = Checklist::find($checklistId)->delete();
+                if($result){
+                    $dataitem['status']  = 201;
+                    $dataitem['action']  = 'success';
+                }
+            }else{
+                $dataitem['status']  = 404;
+                $dataitem['error']  = 'Not Found';
+            }
+            return response()->json(
+                $dataitem, 500
+            );
+        }catch(Exception $e){
+            $dataitem['status']     = 500;
+            $dataitem['error']      = $e->getMessage();
+            return response()->json(
+                $dataitem, 500
+            );
+        }
     }
 
     public function store(Request $request)
     {
-    	$time = Carbon::now('UTC')->toIso8601String();
-        $data = $request->json('data')['attributes'];
-        $checklist = new Checklist();
-        $checklist->object_domain     	= $data['object_domain'];
-        $checklist->object_id    		= $data['object_id'];
-        $checklist->due   				= $data['due'];
-        $checklist->urgency 			= $data['urgency'];
-        $checklist->description   		= $data['description'];
- 
-        if($checklist->save())
-        {
-        	//save to item
-	        $items = $data['items'];
-	        if (count($items) >= 1) {
-	        	foreach ($items as $key) {
-	        		$item = new Item();
-	        		$item->checklistId 	= $checklist->id;
-	        		$item->description 	= $key;
-	        		$item->due 			= $data['due'];
-	        		$item->urgency 		= $data['urgency'];	
-	        		$item->save();
-	        	}
-	        }
-            $respon = Checklist::find($checklist->id);
-            return response()->json([
-            							'message' => 'success', 
-            							'data'	=>	[
-            								'type' 	=> 'checklists',
-            								'id'	=> $checklist->id,
-            								'attributes' => $respon
-            								],
-            							'links' => [ 'self' => $request->fullUrl() ]
-            							
-            						],201);
-        }else{
-            return response()->json([
-                'status' => '401'
-            ],500);
-        }
-    }
-
-    public function show($id,Request $request)
-    {
-        $defaultPerPage = 1;
-        $maximumPerPage = 10;
-        $page           = 0;
-        $sort 			= 'asc';
-        $include 		= '';
-        $expireAt       = Carbon::now()->addMinutes(3);
-
-        if($request->has('sort'))
-        {
-            $sort = (string) $request->query('sort');
-            if ($sort == '-urgency') {
-            	$sort = 'desc';
+        try{
+            $req                    = json_decode($request->getContent(),true);
+            $data                   = $req['data']['attributes'];
+            $auth                   = $request->header();
+            $token                  = $auth['authorization'];
+            $user                   = User::where('api_token',str_replace('bearer ','',$token[0]))->first();
+            $dataitems              = $data['items'];
+            $execute                = Checklist::create(
+                                    [
+                                        'template_id'   => Template::all()->random()->id,
+                                        'object_domain' => $data['object_domain'],
+                                        'object_id'     => $data['object_id'],
+                                        'due'           => $data['due'],
+                                        'urgency'       => $data['urgency'],
+                                        'description'   => $data['description'],
+                                        'task_id'       => $data['task_id']
+                                    ]
+            );
+            foreach($dataitems as $val){
+                $execute->items()->create(
+                    [
+                        'description'   => $val,
+                        'user_id'       => $user->id
+                    ]
+                );
             }
-        }
-
-        if($request->has('include'))
-        {
-            $include = (string) $request->query('include');
-        }
-
-        if($request->has('page_limit'))
-        {
-            if(is_numeric($request->query('page_limit')))
-            {
-                $defaultPerPage = (int) $request->query('page_limit');
-
-                if($defaultPerPage > $maximumPerPage)
-                {
-                    $defaultPerPage = $maximumPerPage;
-                }
-            }
-        }
-
-        if($request->has('page_offset'))
-        {
-            $page = (int)$defaultPerPage * ( $request->query('page_offset') - 1);
-        }
-
-        $checklist = Cache::remember('checklist.index:show:{$id}:{$page}', $expireAt, function() use ($defaultPerPage,$page,$sort,$id) {
-                        return DB::table('checklist')
-                                        ->select('checklist.id','checklist.object_domain','checklist.object_id','checklist.description','checklist.is_completed','checklist.due','checklist.urgency','checklist.completed_at','checklist.updated_by as last_update_by','checklist.updated_at','checklist.created_at')
-                                        ->where([['checklist.id','=',$id]])
-                                        ->orderBy('checklist.urgency',$sort)
-                                        ->limit($defaultPerPage)
-                                        ->offset($page)
-                                        ->get()->toArray();
-                            });
-
-        if(!empty($checklist))
-        {
-        	foreach ($checklist as $list) {
-        		$data = array(
-        			'type' 	=> 'checklists',
-        			'id'	=> $list->id,
-        			'attributes' => [
-        				'object_domain'=> $list->object_domain,
-				        'object_id'=> $list->object_id,
-				        'description'=> $list->description,
-				        'is_completed'=> $list->is_completed,
-				        'due'=> $list->due,
-				        'urgency'=> $list->urgency,
-				        'completed_at'=> $list->completed_at,
-				        'last_update_by'=> $list->last_update_by,
-				        'updated_at'=> $list->updated_at,
-				        'created_at'=> $list->created_at
-        				]	
-        			);
-        	}
-        	if($request->has('include')){
-        		if($include != ''){
-        			$items = DB::table('items')
-                                        ->select('items.id','items.description','items.is_completed','items.due','items.urgency')
-                                        ->where([['items.checklistId','=',$id]])
-                                        ->orderBy('items.urgency',$sort)
-                                        ->limit($defaultPerPage)
-                                        ->offset($page)
-                                        ->get()->toArray();
-
-                    foreach ($items as $item) {
-		        		$dataItem = array(
-		        			'type' 	=> 'item',
-		        			'id'	=> $item->id,
-		        			'attributes' => [
-						        'description'=> $item->description,
-						        'is_completed'=> $item->is_completed,
-						        'due'=> $item->due,
-						        'urgency'=> $item->urgency
-		        				]	
-		        			);
-		        	}
-                    return new JsonResponse([
-			            'message' => 'success',
-			            'meta'	=> [
-			            	'count' => count($items),
-			            	'total'	=> count($checklist)
-			            	],
-			            'data' => (array) $data,
-			            'items' =>(array) $dataItem,
-						'links' => [ 'self' => $request->fullUrl() ]
-			        ],201);	
-        		}
-        	}else{
-        		return new JsonResponse([
-		            'message' => 'success',
-		            'meta'	=> [
-		            	'count' => $defaultPerPage,
-		            	'total'	=> count($checklist)
-		            	],
-		            'data' => (array) $data,
-					'links' => [ 'self' => $request->fullUrl() ]
-		        ],201);	
-        	}
-            
-        }
-        else
-        {
-        	return new JsonResponse([
-            	'message' => 'gagal',
-	        ],400);
-        }
-        
-        // return response()->json(message' => 'success', 'data'=>$post],201);
-    }
-
-    public function update(Request $request, $id){
-
-        $checklist = Checklist::find($id);
-
-        if(!$checklist){
-            return $this->error("The Checklist with {$id} doesn't exist", 404);
-        }
-
-        $time = Carbon::now('UTC')->toIso8601String();
-        $data = $request->json('data')['attributes'];
-       
-        $checklist->object_domain     	= $data['object_domain'];
-        $checklist->object_id    		= $data['object_id'];
-        $checklist->due   				= $data['due'];
-        $checklist->urgency 			= $data['urgency'];
-        $checklist->description   		= $data['description'];
- 
-        if($checklist->save())
-        {
-        	//save to item
-	        $items = $data['items'];
-	        if (count($items) > 1) {
-	        	foreach ($items as $key) {
-	        		$item = new Item();
-	        		$item->checklistId 	= $checklist->id;
-	        		$item->description 	= $key;
-	        		$item->due 			= $data['due'];
-	        		$item->urgency 		= $data['urgency'];	
-	        		$item->save();
-	        	}
-	        }
-            $respon = $checklist::find($checklist->id);
-            return response()->json([
-            							'message' => 'success', 
-            							'data'	=>	[
-            								'type' 	=> 'checklists',
-            								'id'	=> $checklist->id,
-            								'attributes' => $respon
-            								],
-            							'links' => [ 'self' => $request->fullUrl() ]
-            							
-            						],201);
-        }else{
-            return response()->json([
-                'status' => '401'
-            ],500);
+            $datachecklist      = Checklist::where('id',$execute->id)->first();
+            return new GetChecklistResource($datachecklist);
+        }catch(Exception $e){
+            $dataitem['status']     = 500;
+            $dataitem['error']      = $e->getMessage();
+            return response()->json(
+                $dataitem, 500
+            );
         }
     }
-
-    public function destroy($id){
-
-        $checklist = Checklist::find($id);
-
-        if(!$checklist){
-            return new JsonResponse([
-		            'message' => 'Not Found',
-		        ],500);
-        }
-
-        // no need to delete the comments for the current posts,
-        // since we used on delete cascase on update cascase.
-        // $posts->comments()->delete();
-        if($checklist->delete()){
-        	DB::table('items')->where('checklistId', '=', $id)->delete();
-        }
-        return new JsonResponse([
-		            'message' => 'success',
-		        ],201);
-    }
-
 }
