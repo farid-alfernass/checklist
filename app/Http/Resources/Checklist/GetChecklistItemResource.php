@@ -34,7 +34,7 @@ class GetChecklistItemResource extends Resource
                     'updated_at'        => $this->updated_at
                 ],
                 'links' => [
-                    'self' => route('getchecklistitem',['checklistId' => $this->checklist_id, 'itemId' => $this->id]),
+                    'self' => url('checklists/'.$this->checklist_id.'/items/'.$this->id),
                 ],
             ]
         ];

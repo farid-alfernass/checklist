@@ -13,6 +13,7 @@ use App\Http\Resources\Checklist\GetChecklistItemResource;
 use App\Http\Resources\Item\CreateChecklistItemResource;
 use Carbon\Carbon;
 use App\Http\Controllers\Controller;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class ItemsControllers extends Controller{
     /**
@@ -32,8 +33,8 @@ class ItemsControllers extends Controller{
             $data                   = $req['data']['attribute'];
             $auth                   = $request->header();
             $token                  = $auth['authorization'];
-            $user                   = User::where('api_token',str_replace('bearer ','',$token[0]))->first();
-            $data['user_id']        = $user->id;
+            $user                   = json_decode(JWTAuth::toUser($token),true);
+            $data['user_id']        = $user['id'];
             $data['checklist_id']   = $id;
             $result                 = Item::create($data);
             if($result){

@@ -31,7 +31,7 @@ class GetChecklistResource extends Resource
                     'created_at'        => $this->created_at
                 ],
                 'links' => [
-                    'self' => route('getchecklist',['checklistId' => $this->id])
+                    'self' => url('checklists/'.$this->id)
                 ],
             ]
         ];

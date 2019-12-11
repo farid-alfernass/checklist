@@ -11,6 +11,7 @@ use App\Http\Resources\Template\ListAllChecklistTemplateCollection;
 use App\Http\Resources\Template\CreateChecklistTemplateResource;
 use Faker\Factory as Faker;
 use App\Http\Controllers\Controller;
+use Tymon\JWTAuth\Facades\JWTAuth;
 
 class TemplateControllers extends Controller{
     /**
@@ -21,6 +22,11 @@ class TemplateControllers extends Controller{
     // public function __construct()
     // {
     //     $this->middleware('auth');
+    // }
+    // public function __construct(){
+    //     if ((App::environment() == 'testing') && array_key_exists("HTTP_AUTHORIZATION",  Request::server())) {
+    //         JWTAuth::setRequest(\Route::getCurrentRequest());
+    //     }
     // }
 
     public function listallchecklisttemplate()
@@ -75,7 +81,7 @@ class TemplateControllers extends Controller{
             $data                   = $req['data']['attributes'];
             $auth                   = $request->header();
             $token                  = $auth['authorization'];
-            $user                   = User::where('api_token',str_replace('bearer ','',$token[0]))->first();
+            $user                   = json_decode(JWTAuth::toUser($token),true);
             $dataitems              = $data['items'];
             $exetemplate            = Template::create(
                                     [
@@ -94,7 +100,7 @@ class TemplateControllers extends Controller{
             foreach($dataitems as $val){
                 $exechecklist->items()->create(
                     [
-                        'user_id'       => $user->id,
+                        'user_id'       => $user['id'],
                         'description'   => $val['description'],
                         'urgency'       => $val['urgency'],
                         'due_interval'  => $val['due_interval'],
@@ -121,7 +127,7 @@ class TemplateControllers extends Controller{
             $data                   = $req['data'];
             $auth                   = $request->header();
             $token                  = $auth['authorization'];
-            $user                   = User::where('api_token',str_replace('bearer ','',$token[0]))->first();
+            $user                   = json_decode(JWTAuth::toUser($token),true);
             $dataitems              = $data['items'];
 
             $findtemplate           = Template::find($templateId)->first();
@@ -173,7 +179,7 @@ class TemplateControllers extends Controller{
             // foreach($dataitems as $val){
             //     $exechecklist->items()->update(
             //         [
-            //             'user_id'       => $user->id,
+            //             'user_id'       => $user['id'],
             //             'description'   => $val['description'],
             //             'urgency'       => $val['urgency'],
             //             'due_interval'  => $val['due_interval'],
