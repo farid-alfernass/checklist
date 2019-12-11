@@ -1,21 +1,40 @@
-# Lumen PHP Framework
+# Checklist
 
-[![Build Status](https://travis-ci.org/laravel/lumen-framework.svg)](https://travis-ci.org/laravel/lumen-framework)
-[![Total Downloads](https://poser.pugx.org/laravel/lumen-framework/d/total.svg)](https://packagist.org/packages/laravel/lumen-framework)
-[![Latest Stable Version](https://poser.pugx.org/laravel/lumen-framework/v/stable.svg)](https://packagist.org/packages/laravel/lumen-framework)
-[![Latest Unstable Version](https://poser.pugx.org/laravel/lumen-framework/v/unstable.svg)](https://packagist.org/packages/laravel/lumen-framework)
-[![License](https://poser.pugx.org/laravel/lumen-framework/license.svg)](https://packagist.org/packages/laravel/lumen-framework)
+This project is to pass the skill test
 
-Laravel Lumen is a stunningly fast PHP micro-framework for building web applications with expressive, elegant syntax. We believe development must be an enjoyable, creative experience to be truly fulfilling. Lumen attempts to take the pain out of development by easing common tasks used in the majority of web projects, such as routing, database abstraction, queueing, and caching.
 
-## Official Documentation
+### Installing
 
-Documentation for the framework can be found on the [Lumen website](http://lumen.laravel.com/docs).
+A step by step series of examples that tell you have to get a development env running
 
-## Security Vulnerabilities
+Say what the step will be
+- Create ENV file (.env) with this configuration:
+```
+API_PREFIX=
+DB_HOST=
+DB_PORT=
+DB_DATABASE=
+DB_USERNAME=
+DB_PASSWORD=
+```
+- Then run this command
+```
+Give the example
+...
+$ composer install
+$ php artisan migrate --seed
+$ php -S localhost:8000 -t public or php artisan serve
+```
 
-If you discover a security vulnerability within Lumen, please send an e-mail to Taylor Otwell at taylor@laravel.com. All security vulnerabilities will be promptly addressed.
+### Running the tests
 
-## License
+Explain how to run the automated tests for this system
+```sh
+Give the example
+...
+$ vendor/bin/phpunit
+```
 
-The Lumen framework is open-sourced software licensed under the [MIT license](http://opensource.org/licenses/MIT)
+### Authors
+
+* **Farid Tri Wicaksono** - *Initial work* - [Github](https://github.com/farid-alfernass)
